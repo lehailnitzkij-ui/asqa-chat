@@ -25,9 +25,7 @@ jobs:
           PKGPATH=${PKG//./\/}
           echo "Package: $PKG"
 
-          mkdir -p app/src/main/java/$PKGPATH app/src/main/res/layout \
-                  app/src/main/res/drawable app/src/main/res/values \
-                  app/src/main/res/mipmap-anydpi-v26 app/src/main/res/mipmap-xxxhdpi
+          mkdir -p app/src/main/java/$PKGPATH app/src/main/res/layout app/src/main/res/drawable app/src/main/res/values app/src/main/res/mipmap-anydpi-v26 app/src/main/res/mipmap-xxxhdpi
 
           [ -f AndroidManifest.xml ] && mv AndroidManifest.xml app/src/main/
           [ -f build.gradle ] && mv build.gradle app/build.gradle
@@ -48,38 +46,14 @@ jobs:
             [ -f "$f" ] && mv "$f" app/src/main/res/drawable/
           done
 
-          printf '%s\n' \
-            "pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }" \
-            "dependencyResolutionManagement { repositories { google(); mavenCentral() } }" \
-            "include ':app'" \
-            "rootProject.name = 'AsqaChat'" \
-            > settings.gradle
-          printf '%s\n' \
-            "org.gradle.jvmargs=-Xmx2048m" \
-            "android.useAndroidX=true" \
-            > gradle.properties
+          printf '%s\n' "pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }" "dependencyResolutionManagement { repositories { google(); mavenCentral() } }" "include ':app'" "rootProject.name = 'AsqaChat'" > settings.gradle
+          printf '%s\n' "org.gradle.jvmargs=-Xmx2048m" "android.useAndroidX=true" > gradle.properties
 
           cd app
           sed -i "/id 'com.android.application'/ { /version/! s/id 'com.android.application'/id 'com.android.application' version '8.5.2'/ }" build.gradle
-          sed -i "/id \"com.android.application\"/ { /version/! s/id \"com.android.application\"/id \"com.android.application\" version \"8.5.2\"/ }" build.gradle
           sed -i "/id 'org.jetbrains.kotlin.android'/ { /version/! s/id 'org.jetbrains.kotlin.android'/id 'org.jetbrains.kotlin.android' version '1.9.24'/ }" build.gradle
-          sed -i "/id \"org.jetbrains.kotlin.android\"/ { /version/! s/id \"org.jetbrains.kotlin.android\"/id \"org.jetbrains.kotlin.android\" version \"1.9.24\"/ }" build.gradle
           grep -q "namespace" build.gradle || sed -i "0,/android {/s//android {\n    namespace '$PKG'/" build.gradle
-
-          # Автодозаполнение: если какой-то @drawable/... не найден, создаём заглушку
-          cd src/main/res
-          for ref in $(grep -rhoP '@drawable/\K[A-Za-z0-9_]+' . 2>/dev/null | sort -u); do
-            if ! ls drawable/$ref.* >/dev/null 2>&1; then
-              cat > drawable/$ref.xml <<'EOF'
-<?xml version="1.0" encoding="utf-8"?>
-<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-  <solid android:color="#1A3B2A" />
-  <stroke android:width="1dp" android:color="#D4AF37" />
-</shape>
-EOF
-              echo "Created stub drawable: $ref"
-            fi
-          done
+          cd ..
 
       - name: Accept Android licenses
         run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
@@ -88,6 +62,16 @@ EOF
         run: |
           curl -sL https://services.gradle.org/distributions/gradle-8.9-bin.zip -o gradle.zip
           unzip -q gradle.zip
+
+      - name: Create missing drawables
+        run: |
+          STUB='<?xml version="1.0" encoding="utf-8"?><shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle"><solid android:color="#1A3B2A" /><stroke android:width="1dp" android:color="#D4AF37" /></shape>'
+          for ref in $(grep -rhoP '@drawable/\K[A-Za-z0-9_]+' app/src/main/res app/src/main/AndroidManifest.xml 2>/dev/null | sort -u); do
+            if ! ls app/src/main/res/drawable/$ref.* >/dev/null 2>&1; then
+              echo "$STUB" > app/src/main/res/drawable/$ref.xml
+              echo "Created stub drawable: $ref"
+            fi
+          done
 
       - name: Build APK
         run: ./gradle-8.9/bin/gradle assembleDebug --no-daemon

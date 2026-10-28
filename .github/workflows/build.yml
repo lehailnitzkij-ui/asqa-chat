@@ -18,7 +18,6 @@ jobs:
           echo "--- Files in repo root ---"
           ls -la
 
-          # Определяем пакет: сначала манифест, потом .kt-файл, потом запасной вариант
           PKG=$(grep -oP 'package="\K[^"]+' AndroidManifest.xml | head -1 || true)
           if [ -z "$PKG" ]; then
             PKG=$(grep -m1 -oP '^\s*package\s+\K[a-zA-Z0-9_.]+' MainActivity.kt || true)
@@ -63,11 +62,27 @@ jobs:
             "android.useAndroidX=true" \
             > gradle.properties
 
+          # Добавляем версии плагинам и namespace
+          cd app
+          sed -i "/id 'com.android.application'/ { /version/! s/id 'com.android.application'/id 'com.android.application' version '8.5.2'/ }" build.gradle
+          sed -i "/id \"com.android.application\"/ { /version/! s/id \"com.android.application\"/id \"com.android.application\" version \"8.5.2\"/ }" build.gradle
+          sed -i "/id 'org.jetbrains.kotlin.android'/ { /version/! s/id 'org.jetbrains.kotlin.android'/id 'org.jetbrains.kotlin.android' version '1.9.24'/ }" build.gradle
+          sed -i "/id \"org.jetbrains.kotlin.android\"/ { /version/! s/id \"org.jetbrains.kotlin.android\"/id \"org.jetbrains.kotlin.android\" version \"1.9.24\"/ }" build.gradle
+          grep -q "namespace" build.gradle || sed -i "0,/android {/s//android {\n    namespace '$PKG'/" build.gradle
+          echo "--- build.gradle now: ---"
+          cat build.gradle
+          cd ..
+
       - name: Accept Android licenses
         run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
 
+      - name: Install Gradle 8.9
+        run: |
+          curl -sL https://services.gradle.org/distributions/gradle-8.9-bin.zip -o gradle.zip
+          unzip -q gradle.zip
+
       - name: Build APK
-        run: gradle assembleDebug --no-daemon
+        run: ./gradle-8.9/bin/gradle assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

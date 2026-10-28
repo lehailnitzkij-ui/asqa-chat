@@ -3,7 +3,7 @@ on: [push, workflow_dispatch]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs_on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -15,7 +15,17 @@ jobs:
 
       - name: Rebuild project structure
         run: |
-          PKG=$(grep -oP 'package="\K[^"]+' AndroidManifest.xml)
+          echo "--- Files in repo root ---"
+          ls -la
+
+          # Определяем пакет
+          PKG=$(grep -oP 'package="\K[^"]+' AndroidManifest.xml || true)
+          if [ -z "$PKG" ]; then
+            PKG=$(grep -m1 -oP '^\s*package\s+\K[a-zA-Z0-9_.]+' MainActivity.kt || true)
+          fi
+          if [ -z "$PKG" ]; then
+            PKG="com.example.asqachat"
+          fi
           PKGPATH=${PKG//./\/}
           echo "Package: $PKG"
 
@@ -24,8 +34,7 @@ jobs:
                   app/src/main/res/mipmap-anydpi-v26 app/src/main/res/mipmap-xxxhdpi
 
           mv AndroidManifest.xml app/src/main/
-          mv *.kt app/src/main/java/$PKGPATH/
-          mv build.gradle app/build.gradle
+          mv *.kt app/src/main/java/$PKGPATH/ 2>/dev/null || true
 
           for f in activity_main.xml item_msg.xml bubble_mine.xml bubble_other.xml; do
             [ -f "$f" ] && mv "$f" app/src/main/res/layout/
@@ -54,14 +63,5 @@ jobs:
             > gradle.properties
 
       - name: Accept Android licenses
-        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
-
-      - name: Build APK
-        run: gradle assembleDebug --no-daemon
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: asqa-chat-apk
-          path: app/build/outputs/apk/debug/*.apk
-          
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest
+        

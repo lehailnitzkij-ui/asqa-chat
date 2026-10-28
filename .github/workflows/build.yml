@@ -31,10 +31,10 @@ jobs:
           [ -f build.gradle ] && mv build.gradle app/build.gradle
           mv *.kt app/src/main/java/$PKGPATH/ 2>/dev/null || true
 
-          for f in activity_main.xml item_msg.xml bubble_mine.xml bubble_other.xml; do
+          for f in activity_main.xml item_msg.xml; do
             [ -f "$f" ] && mv "$f" app/src/main/res/layout/
           done
-          for f in button_gold.xml chip_active.xml chip_bg.xml edit_bg.xml ornament_tile.xml; do
+          for f in bubble_mine.xml bubble_other.xml button_gold.xml chip_active.xml chip_bg.xml edit_bg.xml ornament_tile.xml; do
             [ -f "$f" ] && mv "$f" app/src/main/res/drawable/
           done
           [ -f ic_launcher.png ] && mv ic_launcher.png app/src/main/res/mipmap-xxxhdpi/
@@ -54,6 +54,9 @@ jobs:
           sed -i "/id 'org.jetbrains.kotlin.android'/ { /version/! s/id 'org.jetbrains.kotlin.android'/id 'org.jetbrains.kotlin.android' version '1.9.24'/ }" build.gradle
           grep -q "namespace" build.gradle || sed -i "0,/android {/s//android {\n    namespace '$PKG'/" build.gradle
           cd ..
+
+          # Снимаем override с onClosed (сигнатура не совпадает с библиотекой)
+          sed -i 's/override fun onClosed(/fun onClosed(/' app/src/main/java/$PKGPATH/*.kt
 
       - name: Accept Android licenses
         run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null

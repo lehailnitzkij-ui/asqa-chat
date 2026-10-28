@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+
+    <!-- ЭКРАН ВХОДА -->
+    <LinearLayout
+        android:id="@+id/loginScreen"
+        android:layout_width="match_parent" android:layout_height="match_parent"
+        android:orientation="vertical" android:gravity="center"
+        android:padding="28dp" android:background="@color/cream">
+
+        <View android:layout_width="match_parent" android:layout_height="26dp"
+            android:background="@drawable/ornament_tile"/>
+
+        <TextView
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Аська" android:textSize="38sp" android:textStyle="bold"
+            android:textColor="@color/dark_red" android:layout_marginTop="24dp"/>
+
+        <TextView
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Чат в бурятских орнаментах" android:textSize="14sp"
+            android:textColor="@color/turquoise" android:layout_marginTop="4dp"/>
+
+        <EditText
+            android:id="@+id/etServer"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="30dp" android:hint="Адрес сервера"
+            android:inputType="textUri" android:background="@drawable/edit_bg"
+            android:padding="12dp" android:textColor="@color/dark_red"/>
+
+        <EditText
+            android:id="@+id/etLogin"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="12dp" android:hint="Логин (цифры)"
+            android:inputType="number" android:background="@drawable/edit_bg"
+            android:padding="12dp" android:textColor="@color/dark_red"/>
+
+        <EditText
+            android:id="@+id/etPass"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="12dp" android:hint="Пароль"
+            android:inputType="textPassword" android:background="@drawable/edit_bg"
+            android:padding="12dp" android:textColor="@color/dark_red"/>
+
+        <Button
+            android:id="@+id/btnLogin"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="20dp" android:text="ВОЙТИ"
+            android:textColor="@color/dark_red" android:textStyle="bold"
+            android:background="@drawable/button_gold"/>
+
+        <View android:layout_width="match_parent" android:layout_height="26dp"
+            android:layout_marginTop="30dp" android:background="@drawable/ornament_tile"/>
+    </LinearLayout>
+
+    <!-- ЭКРАН ЧАТА -->
+    <LinearLayout
+        android:id="@+id/chatScreen"
+        android:layout_width="match_parent" android:layout_height="match_parent"
+        android:orientation="vertical" android:visibility="gone"
+        android:background="@color/cream">
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:background="@color/dark_red">
+            <TextView
+                android:id="@+id/tvTitle"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Общий чат" android:textSize="20sp" android:textStyle="bold"
+                android:textColor="@color/gold_light" android:padding="14dp"/>
+            <View android:layout_width="match_parent" android:layout_height="18dp"
+                android:background="@drawable/ornament_tile"/>
+        </LinearLayout>
+
+        <HorizontalScrollView android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:scrollbars="none"
+            android:background="@color/red">
+            <LinearLayout
+                android:id="@+id/chipsRow"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:orientation="horizontal" android:padding="8dp"/>
+        </HorizontalScrollView>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvMessages"
+            android:layout_width="match_parent" android:layout_height="0dp"
+            android:layout_weight="1"/>
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:padding="8dp"
+            android:background="@color/cream" android:gravity="center_vertical">
+            <EditText
+                android:id="@+id/etMessage"
+                android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:hint="Сообщение..."
+                android:maxLines="4" android:background="@drawable/edit_bg"
+                android:padding="12dp" android:textColor="@color/dark_red"/>
+            <Button
+                android:id="@+id/btnSend"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_marginStart="8dp" android:text="➤"
+                android:textColor="@color/dark_red" android:textStyle="bold"
+                android:background="@drawable/button_gold"/>
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

@@ -1,27 +1,67 @@
 name: Build APK
 on: [push, workflow_dispatch]
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-      - uses: android-actions/setup-android@v3
-      - name: Build APK
+
+      - name: Rebuild project structure
         run: |
-          cd app
-          chmod +x gradlew
-          ./gradlew assembleDebug
+          PKG=$(grep -oP 'package="\K[^"]+' AndroidManifest.xml)
+          PKGPATH=${PKG//./\/}
+          echo "Package: $PKG"
+
+          mkdir -p app/src/main/java/$PKGPATH app/src/main/res/layout \
+                  app/src/main/res/drawable app/src/main/res/values \
+                  app/src/main/res/mipmap-anydpi-v26 app/src/main/res/mipmap-xxxhdpi
+
+          mv AndroidManifest.xml app/src/main/
+          mv *.kt app/src/main/java/$PKGPATH/
+          mv build.gradle app/build.gradle
+
+          for f in activity_main.xml item_msg.xml bubble_mine.xml bubble_other.xml; do
+            [ -f "$f" ] && mv "$f" app/src/main/res/layout/
+          done
+          for f in button_gold.xml chip_active.xml chip_bg.xml edit_bg.xml ornament_tile.xml; do
+            [ -f "$f" ] && mv "$f" app/src/main/res/drawable/
+          done
+          [ -f ic_launcher.png ] && mv ic_launcher.png app/src/main/res/mipmap-xxxhdpi/
+          [ -f ic_launcher.xml ] && mv ic_launcher.xml app/src/main/res/mipmap-anydpi-v26/
+          for f in colors.xml themes.xml strings.xml styles.xml; do
+            [ -f "$f" ] && mv "$f" app/src/main/res/values/
+          done
+          for f in *.xml; do
+            [ -f "$f" ] && mv "$f" app/src/main/res/drawable/
+          done
+
+          printf '%s\n' \
+            "pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }" \
+            "dependencyResolutionManagement { repositories { google(); mavenCentral() } }" \
+            "include ':app'" \
+            "rootProject.name = 'AsqaChat'" \
+            > settings.gradle
+          printf '%s\n' \
+            "org.gradle.jvmargs=-Xmx2048m" \
+            "android.useAndroidX=true" \
+            > gradle.properties
+
+      - name: Accept Android licenses
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
+
+      - name: Build APK
+        run: gradle assembleDebug --no-daemon
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: asqa-chat-apk
-          path: app/**/app/build/outputs/apk/debug/app-debug.apk
+          path: app/build/outputs/apk/debug/*.apk
           
